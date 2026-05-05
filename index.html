@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BePro | Focus Engine</title>
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+  
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#1e293b">
+  <meta name="description" content="Turn focus into momentum. Bank Focus coins and track your deep work curve.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="BePro">
+  
+  <!-- App Icons -->
+  <link rel="icon" type="image/png" sizes="192x192" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%236366f1' width='192' height='192'/><text x='50%' y='50%' font-size='120' font-weight='bold' fill='white' text-anchor='middle' dy='.3em'>🎯</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%236366f1' width='180' height='180'/><text x='50%' y='50%' font-size='100' font-weight='bold' fill='white' text-anchor='middle' dy='.3em'>🎯</text></svg>">
+  
+  <link rel="stylesheet" href="bepro.css">
+  <script src="bepro.js" defer></script>
+  <script>
+    // Register Service Worker for offline support
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
+    }
+  </script>
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+  <div class="ambient ambient-c"></div>
+  <div class="grid-noise"></div>
+  <div class="burst-layer" id="burstLayer" aria-hidden="true"></div>
+
+  <div class="app-shell">
+    <header class="panel hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Gamified productivity monitoring</p>
+        <h1>BePro</h1>
+        <p class="hero-text">
+          Turn focus into momentum, bank Focus, and track your deep work curve across the week, month, and year.
+        </p>
+      </div>
+
+      <div class="hero-side">
+        <div class="date-pill" id="todayLabel">Today</div>
+        <div class="bank-card">
+          <span class="bank-label">Focus bank</span>
+          <strong id="focusBankStat">0</strong>
+          <p>Lifetime Focus earned from sessions, quests, and wins.</p>
+        </div>
+      </div>
+    </header>
+
+    <section class="top-grid">
+      <article class="panel vault-panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Reward loop</p>
+            <h2>Focus vault</h2>
+          </div>
+          <div class="combo-chip">
+            <span>Combo</span>
+            <strong id="comboStat">x1</strong>
+          </div>
+        </div>
+
+        <div class="vault-balance">
+          <div class="focus-mark">F</div>
+          <div>
+            <p class="vault-label">Today's Focus</p>
+            <strong id="todayFocusStat">0</strong>
+            <p class="vault-copy">1 minute = 1 Focus, with combo and quest bonuses on top.</p>
+          </div>
+        </div>
+
+        <div class="level-card">
+          <div class="level-head">
+            <span id="levelLabel">Level 1</span>
+            <span id="levelProgressLabel">0 / 120</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="levelProgressFill"></div>
+          </div>
+          <p class="level-copy" id="levelMessage">Bank Focus to level up your deep work profile.</p>
+        </div>
+
+        <div class="mini-stats">
+          <article class="mini-stat">
+            <span>Current streak</span>
+            <strong id="streakStat">0 days</strong>
+          </article>
+          <article class="mini-stat">
+            <span>Sessions today</span>
+            <strong id="sessionsStat">0</strong>
+          </article>
+          <article class="mini-stat">
+            <span>Focus score</span>
+            <strong id="focusScoreStat">0</strong>
+          </article>
+          <article class="mini-stat">
+            <span>Deep work</span>
+            <strong id="focusMinutesStat">0 min</strong>
+          </article>
+        </div>
+      </article>
+
+      <article class="panel timer-panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Deep work engine</p>
+            <h2>Focus timer</h2>
+          </div>
+          <span class="cycle-pill" id="cycleCountBadge">Cycle 1</span>
+        </div>
+
+        <div class="mode-switch" id="modeSwitch" role="tablist" aria-label="Timer modes">
+          <button type="button" class="mode-button active" data-mode="focus">Focus</button>
+          <button type="button" class="mode-button" data-mode="shortBreak">Short break</button>
+          <button type="button" class="mode-button" data-mode="longBreak">Long break</button>
+        </div>
+
+        <div class="timer-ring" id="timerRing">
+          <div class="timer-core">
+            <p class="timer-mode" id="timerModeLabel">Deep Focus</p>
+            <div class="timer-display" id="timerDisplay">25:00</div>
+            <p class="timer-support" id="activeTaskLabel">No active task selected yet.</p>
+            <p class="timer-status" id="timerStatusLabel">Start a focus run when you are ready.</p>
+          </div>
+        </div>
+
+        <label class="stacked-field" for="sessionIntent">
+          <span>Session target</span>
+          <input id="sessionIntent" type="text" maxlength="80" placeholder="What will you finish in this run?">
+        </label>
+
+        <div class="timer-controls">
+          <button type="button" class="primary-button" id="startPauseButton">Start</button>
+          <button type="button" class="secondary-button" id="resetButton">Reset</button>
+        </div>
+
+        <div class="preset-row">
+          <button type="button" class="preset-button active" data-preset="25">25 sprint</button>
+          <button type="button" class="preset-button" data-preset="50">50 flow</button>
+          <button type="button" class="preset-button" data-preset="90">90 deep</button>
+        </div>
+      </article>
+    </section>
+
+    <section class="middle-grid">
+      <article class="panel quest-panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Gamify the grind</p>
+            <h2>Daily quests</h2>
+          </div>
+        </div>
+
+        <div class="quest-list" id="questList"></div>
+
+        <div class="section-heading compact">
+          <div>
+            <p class="eyebrow">Milestones</p>
+            <h2>Achievements</h2>
+          </div>
+        </div>
+
+        <div class="badge-grid" id="badgeList"></div>
+      </article>
+
+      <article class="panel graph-panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Productivity curve</p>
+            <h2>Focus graph</h2>
+          </div>
+          <div class="range-switch" id="rangeSwitch" role="tablist" aria-label="Productivity range">
+            <button type="button" class="range-button active" data-range="week">1 week</button>
+            <button type="button" class="range-button" data-range="month">1 month</button>
+            <button type="button" class="range-button" data-range="year">1 year</button>
+          </div>
+        </div>
+
+        <div class="graph-insights">
+          <article class="graph-stat">
+            <span>Total focus</span>
+            <strong id="rangeTotalStat">0 min</strong>
+          </article>
+          <article class="graph-stat">
+            <span>Best period</span>
+            <strong id="rangeBestStat">None yet</strong>
+          </article>
+          <article class="graph-stat">
+            <span>Average</span>
+            <strong id="rangeAverageStat">0 min</strong>
+          </article>
+        </div>
+
+        <div class="chart-shell">
+          <svg id="productivityChart" class="productivity-chart" viewBox="0 0 760 320" preserveAspectRatio="none" aria-label="Productivity history graph"></svg>
+        </div>
+
+        <div class="chart-footer">
+          <span id="chartRangeLabel">Last 7 days</span>
+          <span id="chartFooter">No focus history yet. Finish a session to draw your first curve.</span>
+        </div>
+      </article>
+    </section>
+
+    <section class="bottom-grid">
+      <article class="panel task-panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Execution system</p>
+            <h2>Task board</h2>
+          </div>
+        </div>
+
+        <form class="task-form" id="taskForm">
+          <label class="stacked-field" for="taskTitle">
+            <span>Task title</span>
+            <input id="taskTitle" type="text" maxlength="90" placeholder="Ship proposal draft" required>
+          </label>
+          <label class="stacked-field small-field" for="taskEstimate">
+            <span>Estimate</span>
+            <input id="taskEstimate" type="number" min="5" max="480" step="5" value="30" required>
+          </label>
+          <label class="stacked-field small-field" for="taskPriority">
+            <span>Priority</span>
+            <select id="taskPriority">
+              <option value="high">High</option>
+              <option value="medium" selected>Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </label>
+          <button type="submit" class="primary-button task-submit">Add task</button>
+        </form>
+
+        <p class="panel-copy">Mark a task active before you start the timer so every session earns clear progress.</p>
+        <ul class="task-list" id="taskList" aria-live="polite"></ul>
+      </article>
+
+      <article class="panel distraction-panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Awareness tracker</p>
+            <h2>Distraction log</h2>
+          </div>
+        </div>
+
+        <div class="quick-log" id="quickLog">
+          <button type="button" class="chip-button" data-label="Phone">Phone</button>
+          <button type="button" class="chip-button" data-label="Messages">Messages</button>
+          <button type="button" class="chip-button" data-label="Tabs drift">Tabs drift</button>
+          <button type="button" class="chip-button" data-label="Interruptions">Interruptions</button>
+        </div>
+
+        <form class="distraction-form" id="distractionForm">
+          <label class="stacked-field" for="distractionNote">
+            <span>Custom trigger</span>
+            <input id="distractionNote" type="text" maxlength="80" placeholder="What pulled you away?">
+          </label>
+          <button type="submit" class="secondary-button">Log</button>
+        </form>
+
+        <div class="distraction-stats">
+          <article class="graph-stat">
+            <span>Today</span>
+            <strong id="distractionTodayStat">0</strong>
+          </article>
+          <article class="graph-stat">
+            <span>Tasks done</span>
+            <strong id="tasksDoneStat">0</strong>
+          </article>
+        </div>
+
+        <ul class="distraction-list" id="distractionList" aria-live="polite"></ul>
+      </article>
+    </section>
+
+    <div class="toast" id="toast"></div>
+  </div>
+</body>
+</html>
