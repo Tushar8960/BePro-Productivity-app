@@ -13,7 +13,7 @@ BePro is a lightweight gamified web app for productivity monitoring and focus bo
 
 ## Run it
 
-Open [index.html](./index.html) directly in a browser.
+Open [BePro](https://tushar8960.github.io/BePro-Productivity-app/) directly in a browser.
 
 If you want a local server instead, you can also use any static file server you already have installed.
 
